@@ -10,7 +10,7 @@ use PDL::Types;
 use PDL::Slices;
 use XSLoader;
 
-our $VERSION = '0.01';
+our $VERSION = '0.011';
 
 XSLoader::load('PDL::IO::Arrow', $VERSION);
 
@@ -286,6 +286,13 @@ type name.
 =head1 SEE ALSO
 
 L<PDL>, L<PDL::IO::Protobuf>, L<Data::Frame>, L<Protobuf>
+
+=head1 TYPES
+
+Supports real numeric PDL types (C<byte>, C<sbyte>, C<short>, C<ushort>,
+C<long>, C<ulong>, C<longlong>, C<ulonglong>, C<float>, C<double>) as well as
+native complex types (C<cfloat> / C<complex64> and C<cdouble> / C<complex128>)
+via Arrow fixed-size list / struct complex representations.
 
 =head1 AUTHOR
 

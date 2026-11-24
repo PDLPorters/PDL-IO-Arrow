@@ -3,30 +3,24 @@ use strict;
 use warnings;
 use Config;
 use ExtUtils::MakeMaker;
+use ExtUtils::CppGuess;
 use PDL::Core::Dev;
 
 if (system('pkg-config --exists arrow parquet 2>/dev/null') != 0) {
-    warn "libarrow-dev and libparquet-dev (pkg-config arrow parquet) are required to build PDL::IO::Arrow.\n";
-    exit 0;
+    die "libarrow-dev and libparquet-dev (pkg-config arrow parquet) are required to build PDL::IO::Arrow.\n";
 }
 
 my $cflags  = `pkg-config --cflags arrow parquet 2>/dev/null` || '';
 my $libs    = `pkg-config --libs arrow parquet 2>/dev/null`   || '-lparquet -larrow';
 my $pdl_inc = PDL::Core::Dev::PDL_INCLUDE();
-$pdl_inc =~ s/^"|"$//g;
 chomp($cflags);
 chomp($libs);
 
-my $cpp_compiler = 'g++';
-my $cpp_libs     = '-lstdc++';
-my $cpp_flags    = '-std=c++20';
-if (eval { require ExtUtils::CppGuess; 1 }) {
-    my $guess = ExtUtils::CppGuess->new();
-    my %opts  = $guess->makemaker_options();
-    $cpp_compiler = $guess->compiler_command() || 'g++';
-    $cpp_libs     = $guess->linker_flags()     || '-lstdc++';
-    $cpp_flags    = ($opts{CCFLAGS} || '') . ' -std=c++20';
-}
+my $guess        = ExtUtils::CppGuess->new();
+my %cpp_opts     = $guess->makemaker_options();
+my $cpp_compiler = $guess->compiler_command() || 'g++';
+my $cpp_libs     = $guess->linker_flags()     || '-lstdc++';
+my $cpp_flags    = ($cpp_opts{CCFLAGS} || '') . ' -std=c++20';
 
 my $extra_ldflags = $ENV{LDFLAGS} ? ' ' . $ENV{LDFLAGS} : '';
 
@@ -61,11 +55,11 @@ WriteMakefile(
         resources   => {
             repository => {
                 type => 'git',
-                url  => 'https://github.com/GoogleCloudPlatform/google-auth-library-perl.git',
-                web  => 'https://github.com/GoogleCloudPlatform/google-auth-library-perl',
+                url  => 'https://github.com/PDLPorters/PDL-IO-Arrow.git',
+                web  => 'https://github.com/PDLPorters/PDL-IO-Arrow',
             },
             bugtracker => {
-                web => 'https://github.com/GoogleCloudPlatform/google-auth-library-perl/issues',
+                web => 'https://github.com/PDLPorters/PDL-IO-Arrow/issues',
             },
         },
     },
