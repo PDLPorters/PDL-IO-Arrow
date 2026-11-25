@@ -1,11 +1,13 @@
 Arrow.xs
-arrow_bridge.cc
-arrow_bridge.h
 Changes
-lib/PDL/IO/Arrow.pm
-Makefile.PL
+LICENSE
 MANIFEST
 MANIFEST.SKIP
+Makefile.PL
 README.md
+arrow_bridge.cc
+arrow_bridge.h
+examples/quickstart.pl
+lib/PDL/IO/Arrow.pm
 t/00-load.t
 t/01-arrow-parquet-roundtrip.t

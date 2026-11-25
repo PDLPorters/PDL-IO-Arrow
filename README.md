@@ -9,22 +9,28 @@ Read and write [PDL](https://metacpan.org/pod/PDL) ndarrays via **Apache Arrow I
 - **Full numeric & complex type support:** `double` (`float64`), `float` (`float32`), `sbyte` (`int8`), `byte` (`uint8`/`bool`), `short` (`int16`), `ushort` (`uint16`), `long` (`int32`), `ulong` (`uint32`), `longlong` (`int64`), `ulonglong` (`uint64`), `cfloat` (`FixedSizeList(float32, 2)`), and `cdouble` (`FixedSizeList(float64, 2)`).
 - **Cross-ecosystem interoperability:** Exchanges columnar data with Apache Spark (Spark Connect), BigQuery Storage Read API, DuckDB, Polars, and RAPIDS cuDF.
 
-## Synopsis
+## Quickstart
 
 ```perl
+use strict;
+use warnings;
 use PDL;
 use PDL::IO::Arrow qw(rarrow warrow rparquet wparquet);
 
-# Write named PDL ndarrays to Parquet or Arrow IPC
-wparquet({
+# Write named PDL ndarrays to Parquet and Arrow IPC
+my $table = {
     id    => long([1, 2, 3]),
     score => double([0.5, 1.5, 2.5]),
-}, 'out.parquet');
+};
+wparquet($table, 'out.parquet');
+warrow($table, 'out.arrow');
 
 # Read back into PDL ndarrays
 my $cols = rparquet('out.parquet');
-print $cols->{score}, "\n";
+print 'Mean score: ', $cols->{score}->avg, "\n";
 ```
+
+See [examples/quickstart.pl](examples/quickstart.pl) for a complete runnable tutorial, and run `perldoc PDL::IO::Arrow` for the full API reference and tutorial.
 
 ## Prerequisites
 
@@ -42,4 +48,4 @@ make install
 
 ## License
 
-Apache License, Version 2.0.
+the same terms as Perl itself.

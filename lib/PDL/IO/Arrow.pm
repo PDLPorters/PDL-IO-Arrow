@@ -10,7 +10,7 @@ use PDL::Types;
 use PDL::Slices;
 use XSLoader;
 
-our $VERSION = '0.01';
+our $VERSION = '0.011';
 
 XSLoader::load('PDL::IO::Arrow', $VERSION);
 
@@ -287,14 +287,88 @@ type name.
 
 L<PDL>, L<PDL::IO::Protobuf>, L<Data::Frame>, L<Protobuf>
 
+=head1 TUTORIAL
+
+This tutorial translates the Apache Arrow C++/Python columnar table and
+Parquet/IPC round-trip quickstart into idiomatic Perl and L<PDL>.
+
+=head2 1. Build a Columnar Table from PDL Ndarrays
+
+In C<PDL::IO::Arrow>, a columnar table is represented as a Perl hashref mapping
+column names to 1-D L<PDL> ndarrays of equal length:
+
+    use strict;
+    use warnings;
+    use File::Temp qw(tempfile);
+    use PDL;
+    use PDL::IO::Arrow qw(
+        rarrow warrow rparquet wparquet
+        arrow2pdl_type pdl2arrow_type
+    );
+
+    my $table = {
+        event_id => long([101, 102, 103, 104]),
+        latency  => double([12.4, 8.1, 25.6, 15.0]),
+        score    => float([0.92, 0.85, 0.40, 0.97]),
+    };
+
+=head2 2. Write and Read Apache Parquet
+
+Write the columnar table to a Parquet file with L</wparquet> and read it back
+with L</rparquet>:
+
+    my ($pfh, $parquet_path) = tempfile(SUFFIX => '.parquet', UNLINK => 1);
+    close $pfh;
+
+    wparquet($table, $parquet_path);
+    my $pq_cols = rparquet($parquet_path);
+
+    printf "Parquet mean latency: %.2f ms\n", $pq_cols->{latency}->avg;
+
+=head2 3. Write and Read Apache Arrow IPC
+
+The same hashref can be serialized to Apache Arrow IPC (Feather v2) for
+zero-copy interchange with Spark, DuckDB, or Polars:
+
+    my ($afh, $arrow_path) = tempfile(SUFFIX => '.arrow', UNLINK => 1);
+    close $afh;
+
+    warrow($table, $arrow_path);
+    my $ipc_cols = rarrow($arrow_path);
+
+=head2 4. Inspect Type Mappings and Filter with PDL
+
+Use L</pdl2arrow_type> and L</arrow2pdl_type> to inspect schema mappings, and
+standard PDL indexing to filter rows:
+
+    for my $col (sort keys %{$ipc_cols}) {
+        my $pdl_t   = $ipc_cols->{$col}->type->ioname;
+        my $arrow_t = pdl2arrow_type($pdl_t);
+        printf "Column %-10s PDL=%-8s Arrow=%s\n", $col, $pdl_t, $arrow_t;
+    }
+
+    my $high_score = which($ipc_cols->{score} > 0.90);
+    print 'High-score event IDs: ', $ipc_cols->{event_id}->index($high_score), "\n";
+
+See C<examples/quickstart.pl> in the distribution for a complete runnable
+script.
+
+=head1 TYPES
+
+Supports real numeric PDL types (C<byte>, C<sbyte>, C<short>, C<ushort>,
+C<long>, C<ulong>, C<longlong>, C<ulonglong>, C<float>, C<double>) as well as
+native complex types (C<cfloat> / C<complex64> and C<cdouble> / C<complex128>)
+via Arrow fixed-size list / struct complex representations.
+
 =head1 AUTHOR
 
 C.J. Collier E<lt>cjac@google.comE<gt>
 
-=head1 LICENSE AND COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2026 Google LLC and contributors.
+Copyright 2026 Google LLC
 
-This program is released under the Apache License, Version 2.0.
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
